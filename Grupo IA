@@ -1,0 +1,89 @@
+import heapq
+
+# Base del conocimiento
+ESTACIONES_CONGESTIONADAS = {"C"}
+PENALIZACION_TRANSBORDO = 5
+PENALIZACION_CONGESTION = 7
+
+# Sistema de transporte
+grafo = {
+    "A": [("B", 10, False), ("C", 15, True)],
+    "B": [("D", 12, False), ("E", 15, True)],
+    "C": [("D", 10, False)],
+    "D": [("E", 2, False)],
+    "E": []
+}
+
+# Función de costo
+def costo_con_reglas(destino, tiempo, transbordo):
+    costo = tiempo
+
+    if transbordo:
+        costo += PENALIZACION_TRANSBORDO
+
+    if destino in ESTACIONES_CONGESTIONADAS:
+        costo += PENALIZACION_CONGESTION
+
+    return costo
+
+# Motor de inferencia
+def encontrar_mejor_ruta(inicio, objetivo):
+    cola = [(0, 0, inicio, [])]  # (costo, tiempo, nodo, ruta)
+    visitados = set()
+
+    while cola:
+        costo_actual, tiempo_actual, nodo_actual, ruta = heapq.heappop(cola)
+
+        if nodo_actual in visitados:
+            continue
+
+        visitados.add(nodo_actual)
+        ruta = ruta + [nodo_actual]
+
+        if nodo_actual == objetivo:
+            return costo_actual, tiempo_actual, ruta
+
+        for vecino, tiempo_arco, transbordo in grafo.get(nodo_actual, []):
+            if vecino not in visitados:
+                nuevo_tiempo = tiempo_actual + tiempo_arco
+                nuevo_costo = costo_actual + costo_con_reglas(
+                    vecino, tiempo_arco, transbordo
+                )
+
+                heapq.heappush(
+                    cola, (nuevo_costo, nuevo_tiempo, vecino, ruta)
+                )
+
+    return float("inf"), float("inf"), []
+
+# ======================
+# Ejecución con teclado
+# ======================
+if __name__ == "__main__":
+
+    print("****************************")
+    print("TRANSPORTE MASIVO")
+    print("****************************")
+
+    print("Estaciones disponibles:", ", ".join(grafo.keys()))
+
+    origen = input("Ingrese estación de inicio: ").strip().upper()
+    destino = input("Ingrese estación de destino: ").strip().upper()
+
+    if origen not in grafo or destino not in grafo:
+        print("❌ Error: estación no válida.")
+    else:
+        costo, tiempo, ruta = encontrar_mejor_ruta(origen, destino)
+
+        print("\nRESULTADO")
+        print("----------------------------")
+        print(f"Punto de inicio: {origen}")
+        print(f"Punto de destino: {destino}")
+
+        if ruta:
+            print("Ruta Óptima Encontrada:")
+            print(" -> ".join(ruta))
+            print(f"Costo total: {costo}")
+            print(f"Tiempo total: {tiempo}")
+        else:
+            print("⚠ No existe ruta posible.")
